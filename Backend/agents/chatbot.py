@@ -3,7 +3,8 @@ import json
 from llm_client import ask_model
 
 def main():
-    # Check if input is coming from a pipe/redirect (like the backend spawnPython)
+
+
     if not sys.stdin.isatty():
         try:
             input_data = sys.stdin.read()
