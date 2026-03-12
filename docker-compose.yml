@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost:5173
+      MONGO_URI: mongodb://mongo:27017/grain_quality
+      REDIS_URL: redis://redis:6379
+      MQTT_BROKER_URL: mqtt://mqtt:1883
+      MQTT_TOPIC_SENSOR: grain/sensor/data
+      MQTT_TOPIC_TRIGGER: grain/camera/trigger
+      MQTT_TOPIC_STATUS: grain/camera/status
+      MQTT_TOPIC_IMAGE: grain/camera/image
+      MQTT_CAMERA_CAPTURE_INTERVAL_MS: 0
+      HUGGINGFACEHUB_API_TOKEN: ${HUGGINGFACEHUB_API_TOKEN:-}
+      HF_TOKEN: ${HF_TOKEN:-}
+      HF_TOKEN_ADVISORY: ${HF_TOKEN_ADVISORY:-}
+      ADVISORY_MODEL_NAME: ${ADVISORY_MODEL_NAME:-meta-llama/Llama-3.2-3B-Instruct}
+    depends_on:
+      - mongo
+      - redis
+      - mqtt
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:5000/api
+        VITE_SOCKET_URL: http://localhost:5000
+        VITE_MQTT_BROKER_URL: ws://localhost:9001
+        VITE_MQTT_TOPIC_STATUS: grain/camera/status
+        VITE_MQTT_TOPIC_IMAGE: grain/camera/image
+        VITE_MQTT_TOPIC_RESULT: grain/quality/result
+    environment:
+      PORT: 5173
+      HOST: 0.0.0.0
+      NODE_ENV: production
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./docker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  redis_data:
+  mosquitto_data:

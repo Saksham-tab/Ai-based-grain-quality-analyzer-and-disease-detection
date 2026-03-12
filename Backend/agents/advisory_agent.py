@@ -6,7 +6,7 @@ import sys
 import os
 import json
 
-# Add the adivasory directory to path so imports work
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "adivasory"))
 
 from dotenv import load_dotenv

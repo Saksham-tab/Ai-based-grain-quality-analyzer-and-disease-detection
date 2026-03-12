@@ -1,0 +1,9 @@
+beautifulsoup4
+huggingface-hub
+numpy
+pypdf
+python-dotenv
+redis
+requests
+scikit-learn
+sentence-transformers
